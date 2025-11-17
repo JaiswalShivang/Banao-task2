@@ -15,7 +15,15 @@ app.use(cors({
   credentials: true
 }));
 
-connectDB().catch(err => console.error('DB error:', err));
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('DB connection error:', err);
+    res.status(500).json({ message: "Database connection failed" });
+  }
+});
 
 app.get("/", (req, res) => res.json({ message: "API running" }));
 app.use("/api/auth", authRoutes);
