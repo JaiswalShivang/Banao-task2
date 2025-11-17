@@ -1,5 +1,5 @@
 const User = require("../models/userModel");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { sendPasswordResetEmail } = require("../utils/emailService");
 require("dotenv").config();
@@ -98,12 +98,24 @@ exports.forgotPassword = async (req, res) => {
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = Date.now() + 3600000;
     await user.save();
-    await sendPasswordResetEmail(email, resetToken);
-    res.status(200).json({
-      message: "Password reset link has been sent to your email"
-    });
+    
+    try {
+      await sendPasswordResetEmail(email, resetToken);
+      res.status(200).json({
+        message: "Password reset link has been sent to your email"
+      });
+    } catch (emailError) {
+      console.error('Email sending error:', emailError);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+      return res.status(500).json({
+        message: "Failed to send email. Please try again later."
+      });
+    }
   }
   catch (error) {
+    console.error('Forgot password error:', error);
     res.status(500).json({
       message: "Server error"
     });
@@ -137,6 +149,7 @@ exports.resetPassword = async (req, res) => {
     });
   }
   catch (error) {
+    console.error('Reset password error:', error);
     res.status(500).json({
       message: "Server error"
     });

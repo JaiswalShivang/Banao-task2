@@ -1,30 +1,24 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
 const connectDB = require("./config/database");
-const userController = require("./controllers/user.controller");
-const postController = require("./controllers/post.controller");
-const authMiddleware = require("./middlewares/auth.middleware");
+const authRoutes = require("./routes/auth.routes");
+const postRoutes = require("./routes/post.routes");
 require("dotenv").config();
 
 const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true
+}));
 
 connectDB();
 
-app.post("/api/auth/register", userController.register);
-app.post("/api/auth/login", userController.login);
-app.post("/api/auth/forgot-password", userController.forgotPassword);
-app.post("/api/auth/reset-password/:token", userController.resetPassword);
-
-app.post("/api/posts", authMiddleware, postController.createPost);
-app.get("/api/posts", postController.getAllPosts);
-app.get("/api/posts/:postId", postController.getPost);
-app.delete("/api/posts/:postId", authMiddleware, postController.deletePost);
-app.put("/api/posts/:postId", authMiddleware, postController.updatePost);
-app.patch("/api/posts/:postId/like", authMiddleware, postController.likePost);
-app.post("/api/posts/:postId/comment", authMiddleware, postController.createPostComment);
+app.use("/api/auth", authRoutes);
+app.use("/api/posts", postRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
