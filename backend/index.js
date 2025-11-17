@@ -10,32 +10,20 @@ const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
-
-
-
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: (origin, callback) => callback(null, true),
   credentials: true
 }));
 
-connectDB();
+connectDB().catch(err => console.error('DB error:', err));
 
-app.get("/", (req, res) => {
-  res.json({ message: "Backend API is running!", status: "OK" });
-});
-
-app.get("/api", (req, res) => {
-  res.json({ message: "API endpoint", status: "OK" });
-});
-
+app.get("/", (req, res) => res.json({ message: "API running" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
+  app.listen(PORT, () => console.log(`Server on port ${PORT}`));
 }
 
 module.exports = app;
